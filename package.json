@@ -1,0 +1,8 @@
+{
+    "urls": [
+      ["utts.py", "github:Voinic/microtts/utts.py"]
+    ],
+    "deps": [
+    ],
+    "version": "0.1"
+  }
