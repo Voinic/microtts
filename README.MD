@@ -2,7 +2,7 @@
 
 Simple TTS library for MicroPython that works offline
 
-Tis library is a MicroPython port of concatanative diphone-based speach synthesizer. It uses lexicon database to convert words to phonemes, which was converted from [CMU Pronouncing Dictionary](http://www.speech.cs.cmu.edu/cgi-bin/cmudict). Diphones database was converted from diphone collection by Alan W Black and Kevin Lenzo ([License](https://raw.githubusercontent.com/Voinic/microtts/master/diphones_license.txt)).
+Tis library is a MicroPython port of concatanative diphone-based speach synthesizer. It uses lexicon database to convert words to phonemes, which was converted from [CMU Pronouncing Dictionary](http://www.speech.cs.cmu.edu/cgi-bin/cmudict) ([License](https://raw.githubusercontent.com/Voinic/microtts/master/db/cmudict_license.txt)). Diphones database was converted from diphone collection by Alan W Black and Kevin Lenzo ([License](https://raw.githubusercontent.com/Voinic/microtts/master/db/diphones_license.txt)).
 
 ## Installation
 
@@ -13,7 +13,9 @@ Tis library is a MicroPython port of concatanative diphone-based speach synthesi
     mip.install("github:Voinic/microtts")
     ```
 
-2. Copy [lexicon.db](https://raw.githubusercontent.com/Voinic/microtts/master/lexicon.db) and [diphones.db](https://raw.githubusercontent.com/Voinic/microtts/master/diphones.db) to SD Card
+2. Copy [lexicon.db](https://raw.githubusercontent.com/Voinic/microtts/master/lexicon.db) and any of [diphones.db](https://raw.githubusercontent.com/Voinic/microtts/master/diphones.db) and [diphones_lq.db](https://raw.githubusercontent.com/Voinic/microtts/master/diphones_lq.db) to SD-card or internal flash (if your have enough space)
+
+Use diphones_lq.db contains recordings with IMA ADPCM compression. You can use it instead of diphones.db if your memory space is limitted. Note that sound quality will decrease.
 
 ## Usage
 
@@ -35,4 +37,8 @@ audio = synth.get_audio()
 ## Usage examples
 
 - [examples/save_to_wav.py](https://github.com/Voinic/microtts/blob/master/examples/save_to_wav.py) - Converts given text to speach and saves result into WAV file.
-- [examples/direct_playback.py](https://github.com/Voinic/microtts/blob/master/examples/direct_playback.py) - Prompts user for input text and sends output audio to I2S DAC
+- [examples/direct_playback.py](https://github.com/Voinic/microtts/blob/master/examples/direct_playback.py) - Prompts user for input text and sends output audio to I2S DAC.
+
+## Creating databases
+
+`/db` folder contains code and input files that was used for databases creation. Run this code using micropython interpreter, not regular python (I used Unix port of micropython).

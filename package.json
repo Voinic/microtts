@@ -3,6 +3,7 @@
       ["utts.py", "github:Voinic/microtts/utts.py"]
     ],
     "deps": [
+      ["github:Voinic/adpcm", "main"]
     ],
-    "version": "0.1"
+    "version": "0.2"
   }

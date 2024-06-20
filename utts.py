@@ -1,6 +1,7 @@
 import btree
-import json
+import struct
 
+import adpcm
 
 class Utterance:
     def __init__(self, utterance, lexicon):
@@ -9,6 +10,7 @@ class Utterance:
         """
     
         # Initialize token filter and pronunciation lexicon
+        self.lexicon_symbols = ["AA", "AA0", "AA1", "AA2", "AE", "AE0", "AE1", "AE2", "AH", "AH0", "AH1", "AH2", "AO", "AO0", "AO1", "AO2", "AW", "AW0", "AW1", "AW2", "AY", "AY0", "AY1", "AY2", "B", "CH", "D", "DH", "EH", "EH0", "EH1", "EH2", "ER", "ER0", "ER1", "ER2", "EY", "EY0", "EY1", "EY2", "F", "G", "HH", "IH", "IH0", "IH1", "IH2", "IY", "IY0", "IY1", "IY2", "JH", "K", "L", "M", "N", "NG", "OW", "OW0", "OW1", "OW2", "OY", "OY0", "OY1", "OY2", "P", "R", "S", "SH", "T", "TH", "UH", "UH0", "UH1", "UH2", "UW", "UW0", "UW1", "UW2", "V", "W", "Y", "Z", "ZH"]
         self.filter = [" ", "\n", "\r", "'", '\\', '`', '(', '_', '#', ']', '{', '+', '/', '=', '|', ';', '?', '$', '^', '*', '%', '&', '~', '!', '<', '"', ')', '[', '-', ',', '.', ':', '>', '@', '}']
         self.utterance = utterance
         self.dbfile = open(lexicon, "rb")
@@ -23,6 +25,22 @@ class Utterance:
     def __del__(self):
         self.db.close()
         self.dbfile.close()
+    
+    def pron_variants(self, word):
+        variants = []
+        current_variant = []
+        for byte in self.db[word]:
+            if byte == 0:
+                variants.append(current_variant)
+                current_variant = []
+            else:
+                symbol = self.lexicon_symbols[byte-1]
+                current_variant.append(symbol)
+        # Append the last variant if not empty
+        if current_variant:
+            variants.append(current_variant)
+    
+        return variants
 
     def get_words(self, utterance):
         """
@@ -55,7 +73,7 @@ class Utterance:
         if word not in self.db:
             raise NotImplementedError(f"Couldn't transcribe '{word}'")
         
-        lex_entry = json.loads(self.db[word])
+        lex_entry = self.pron_variants(word)
         if variant <= len(lex_entry) - 1:
             pronunciation = lex_entry[variant]
         else:
@@ -87,13 +105,14 @@ class Synth:
     BITS_PER_SAMPLE = 16
     NUM_CHANNELS = 1
     
-    def __init__(self, diphones, diphones_db):
+    def __init__(self, diphones, diphones_db, compressed=False):
         """
         Initialize synthesizer.
         """
         self.diphones = diphones
         self.dbfile = open(diphones_db, "rb")
         self.db = btree.open(self.dbfile)
+        self.db_compressed = compressed
     
     def __del__(self):
         self.db.close()
@@ -112,9 +131,19 @@ class Synth:
             ph2 = diphone[1] if diphone[1] is not None else "pau"
             key = bytes(f"{ph1}-{ph2}", "utf-8")
             try:
-                output_audio += self.db[key]
+                raw_audio = self.db[key]
             except KeyError:
                 print(f"{key} don't exist in database")
+            if self.db_compressed:
+                audio = []
+                for two_samples in raw_audio:
+                    audio.append(two_samples&0x0f)
+                    audio.append((two_samples >> 4)&0x0f)
+                decoded_audio = adpcm.decoder(audio)
+                packed_audio = struct.pack(f"<{len(audio)}h", *decoded_audio)
+                output_audio.extend(packed_audio)
+            else:
+                output_audio.extend(raw_audio)
 
         return output_audio
     
@@ -146,7 +175,7 @@ class Synth:
             Synth.SAMPLE_RATE,
             Synth.BITS_PER_SAMPLE,
             Synth.NUM_CHANNELS,
-            len(audio),
+            int(len(audio)*8/Synth.BITS_PER_SAMPLE),
         )
         
         with open(filename, "wb") as wav:

@@ -3,7 +3,11 @@ from machine import Pin
 from utts import Utterance, Synth
 
 LEXICON_DB = "/sd/lexicon.db"
+
 DIPHONES_DB = "/sd/diphones.db"
+DB_COMPRESSED = False
+#DIPHONES_DB = "/sd/diphones_lq.db"
+#DB_COMPRESSED = True
 
 SCK_PIN = 37
 WS_PIN = 38
@@ -24,7 +28,7 @@ def tts(text):
     print(f"Converting text to speech: {text}")
     utterance = Utterance(text, LEXICON_DB)
     diphones = utterance.get_diphones()
-    synth = Synth(diphones, DIPHONES_DB)
+    synth = Synth(diphones, DIPHONES_DB, DB_COMPRESSED)
     audio = synth.get_audio()
     print("Playing...")
     audio_out.write(audio)
