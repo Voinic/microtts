@@ -13,7 +13,7 @@ Tis library is a MicroPython port of concatanative diphone-based speach synthesi
     mip.install("github:Voinic/microtts")
     ```
 
-2. Copy [lexicon.db](https://raw.githubusercontent.com/Voinic/microtts/master/lexicon.db) and any of [diphones.db](https://raw.githubusercontent.com/Voinic/microtts/master/diphones.db) and [diphones_lq.db](https://raw.githubusercontent.com/Voinic/microtts/master/diphones_lq.db) to SD-card or internal flash (if your have enough space)
+2. Copy [lexicon.db](https://raw.githubusercontent.com/Voinic/microtts/master/db/lexicon.db) and any of [diphones.db](https://raw.githubusercontent.com/Voinic/microtts/master/db/diphones.db) and [diphones_lq.db](https://raw.githubusercontent.com/Voinic/microtts/master/db/diphones_lq.db) to SD-card or internal flash (if your have enough space)
 
 Use diphones_lq.db contains recordings with IMA ADPCM compression. You can use it instead of diphones.db if your memory space is limitted. Note that sound quality will decrease.
 
