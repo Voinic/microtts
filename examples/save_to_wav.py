@@ -7,16 +7,23 @@ DB_COMPRESSED = False
 #DIPHONES_DB = "/sd/diphones_lq.db"
 #DB_COMPRESSED = True
 
+POSTPROCESS = True
+
+utterance = Utterance(LEXICON_DB)
+synth = Synth(DIPHONES_DB, DB_COMPRESSED)
+
 def tts(text, output):
-    print(f"Converting text to speech: {text}")
-    utterance = Utterance(text, LEXICON_DB)
+    print(f"Transcribing text: {text}")
+    utterance.process(text)
     diphones = utterance.get_diphones()
-    synth = Synth(diphones, DIPHONES_DB, DB_COMPRESSED)
+    print("Synthesizing speech")
+    synth.synthesize(diphones, POSTPROCESS)
+    print(f"Writing audio to {output}")
     synth.write_wav(output)
-    print(f"Done. Output saved to: {output}")
+    print("Done.")
 
 
-input_text = "This is an example of speech synthesis"
+input_text = "This is an example of speech synthesis on a micro controller"
 output_file = "example.wav"
 
 tts(input_text, output_file)

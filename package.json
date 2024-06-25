@@ -1,9 +1,11 @@
 {
     "urls": [
-      ["utts.py", "github:Voinic/microtts/utts.py"]
+      ["utts/__init__.py", "github:Voinic/microtts/utts/__init__.py"],
+      ["utts/utterance.py", "github:Voinic/microtts/utts/utterance.py"],
+      ["utts/synth.py", "github:Voinic/microtts/utts/synth.py"]
     ],
     "deps": [
       ["github:Voinic/adpcm/adpcm.py", "main"]
     ],
-    "version": "0.2"
+    "version": "0.3"
   }

@@ -23,14 +23,21 @@ Use diphones_lq.db contains recordings with IMA ADPCM compression. You can use i
 from utts import Utterance, Synth
 
 LEXICON_DB = "/sd/lexicon.db"
+
 DIPHONES_DB = "/sd/diphones.db"
+DB_COMPRESSED = False
 
-text = "This is a test"
+POSTPROCESS = True
 
-utterance = Utterance(text, LEXICON_DB)
+TEXT = "This is a test"
+
+utterance = Utterance(LEXICON_DB)
+synth = Synth(DIPHONES_DB, DB_COMPRESSED)
+
+utterance.process(TEXT)
 diphones = utterance.get_diphones()
 
-synth = Synth(diphones, DIPHONES_DB)
+synth.synthesize(diphones, POSTPROCESS)
 audio = synth.get_audio()
 ```
 

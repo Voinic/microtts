@@ -9,6 +9,8 @@ DB_COMPRESSED = False
 #DIPHONES_DB = "/sd/diphones_lq.db"
 #DB_COMPRESSED = True
 
+POSTPROCESS = True  
+
 SCK_PIN = 37
 WS_PIN = 38
 SD_PIN = 36
@@ -24,16 +26,19 @@ audio_out = I2S(0,
     ibuf=1024,
 )
 
+utterance = Utterance(LEXICON_DB)
+synth = Synth(DIPHONES_DB, DB_COMPRESSED)
+
 def tts(text):
-    print(f"Converting text to speech: {text}")
-    utterance = Utterance(text, LEXICON_DB)
+    print("Transcribing text")
+    utterance.process(text)
     diphones = utterance.get_diphones()
-    synth = Synth(diphones, DIPHONES_DB, DB_COMPRESSED)
+    print("Synthesizing speech")
+    synth.synthesize(diphones, POSTPROCESS)
     audio = synth.get_audio()
     print("Playing...")
     audio_out.write(audio)
     print("Done.")
-
 
 try:
     while True:
@@ -41,5 +46,7 @@ try:
         tts(input_text)
 except KeyboardInterrupt:
     print("Exiting.")
-
-audio_out.deinit()
+finally:
+    del utterance
+    del synth
+    audio_out.deinit()
