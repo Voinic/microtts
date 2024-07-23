@@ -5,7 +5,7 @@
       ["utts/synth.py", "github:Voinic/microtts/utts/synth.py"]
     ],
     "deps": [
-      ["github:Voinic/adpcm/adpcm.py", "main"]
+      ["github:Voinic/adpcm", "main"]
     ],
     "version": "0.3"
   }

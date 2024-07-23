@@ -1,35 +1,38 @@
+import micropython
 import btree
 import re
 
-LEXICON_ALPHABET = ["AA", "AA0", "AA1", "AA2", "AE", "AE0", "AE1", "AE2", "AH", "AH0", "AH1", "AH2", "AO",
-                    "AO0", "AO1", "AO2", "AW", "AW0", "AW1", "AW2", "AY", "AY0", "AY1", "AY2", "B", "CH",
-                    "D", "DH", "EH", "EH0", "EH1", "EH2", "ER", "ER0", "ER1", "ER2", "EY", "EY0", "EY1",
-                    "EY2", "F", "G", "HH", "IH", "IH0", "IH1", "IH2", "IY", "IY0", "IY1", "IY2", "JH",
-                    "K", "L", "M", "N", "NG", "OW", "OW0", "OW1", "OW2", "OY", "OY0", "OY1", "OY2", "P",
-                    "R", "S", "SH", "T", "TH", "UH", "UH0", "UH1", "UH2", "UW", "UW0", "UW1", "UW2", "V",
-                    "W", "Y", "Z", "ZH"]
+LEXICON_ALPHABET = micropython.const((
+                          "AA", "AA0", "AA1", "AA2", "AE", "AE0", "AE1", "AE2", "AH", "AH0", "AH1", "AH2", "AO",
+                          "AO0", "AO1", "AO2", "AW", "AW0", "AW1", "AW2", "AY", "AY0", "AY1", "AY2", "B", "CH",
+                          "D", "DH", "EH", "EH0", "EH1", "EH2", "ER", "ER0", "ER1", "ER2", "EY", "EY0", "EY1",
+                          "EY2", "F", "G", "HH", "IH", "IH0", "IH1", "IH2", "IY", "IY0", "IY1", "IY2", "JH",
+                          "K", "L", "M", "N", "NG", "OW", "OW0", "OW1", "OW2", "OY", "OY0", "OY1", "OY2", "P",
+                          "R", "S", "SH", "T", "TH", "UH", "UH0", "UH1", "UH2", "UW", "UW0", "UW1", "UW2", "V",
+                          "W", "Y", "Z", "ZH"))
 
-NUMBERS = {  'teens':{ '19':"nineteen", '18':"eighteen", '17':"seventeen", '16':"sixteen", '15':"fifteen",
+NUMBERS = micropython.const({
+            'teens': {'19':"nineteen", '18':"eighteen", '17':"seventeen", '16':"sixteen", '15':"fifteen",
                       '14':"fourteen", '13':"thirteen", '12': "twelve", '11': "eleven"},
 
-            'digits':{  '9':"nine", '8':"eight", '7':"seven", '6':"six", '5':"five", '4':"four", '3':"three",
-                        '2':"two", '1':"one"},
+            'digits': {'9':"nine", '8':"eight", '7':"seven", '6':"six", '5':"five", '4':"four", '3':"three",
+                       '2':"two", '1':"one"},
 
-            'ordinals':{'1':"first", '2':"second", '3':"third", '4':"fourth", '5':"fifth", '6':"sixth",
-                        '7':"seventh", '8':"eighth", '9':"ninth", '10':"tenth", '11':"eleventh",
-                        '12':"twelfth", '13':"thirteenth", '14':"fourteenth", '15':"fifteenth", '16':"sixteenth",
-                        '17':"seventeenth", '18':"eighteenth", '19':"nineteenth", '20':"twentieth",
-                        '30':"thirtieth"},
+            'ordinals': {'1':"first", '2':"second", '3':"third", '4':"fourth", '5':"fifth", '6':"sixth",
+                         '7':"seventh", '8':"eighth", '9':"ninth", '10':"tenth", '11':"eleventh",
+                         '12':"twelfth", '13':"thirteenth", '14':"fourteenth", '15':"fifteenth", '16':"sixteenth",
+                         '17':"seventeenth", '18':"eighteenth", '19':"nineteenth", '20':"twentieth",
+                         '30':"thirtieth"},
 
-            'decimals':{'1':"ten",'2':"twenty",'3':"thirty",'4':"forty",'5':"fifty",'6':"sixty",
-                        '7':"seventy",'8':"eighty",'9':"ninety",'0':"o"},
+            'decimals': {'1':"ten",'2':"twenty",'3':"thirty",'4':"forty",'5':"fifty",'6':"sixty",
+                         '7':"seventy",'8':"eighty",'9':"ninety",'0':"o"},
 
-            'hundreds':{'0':"hundred"},
+            'hundreds': {'0':"hundred"},
 
-            'mil':{'00':'thousand'}
-        }
+            'mil': {'00':'thousand'}
+        })
 
-MONTHS = ["",
+MONTHS = micropython.const(("",
           "january",
           "february",
           "march",
@@ -41,7 +44,7 @@ MONTHS = ["",
           "september",
           "october",
           "november",
-          "december"]
+          "december"))
 
 
 class Utterance:
@@ -61,6 +64,7 @@ class Utterance:
         self.dbfile.close()
         
     
+    #@micropython.native
     def pron_variants(self, word):
         variants = []
         current_variant = []
@@ -78,6 +82,7 @@ class Utterance:
         return variants
 
     
+    #@micropython.native
     def spell(self):
         """
         This splits the phrase into letters and separates
@@ -91,7 +96,8 @@ class Utterance:
 
         self.phrase = spelllist
 
-
+    
+    #@micropython.native
     def unknownword(self, pron_attempt=None, unkword=None, i=0, flag=0):
         """
         Attempt to pronounce an unk (unknown word)
@@ -144,9 +150,10 @@ class Utterance:
 
         :return: a lowercase list cleaned of punctuation
         """
-        self.phrase=re.sub('[\^%$@)(><=+&\[\]`-]', '', self.phrase).lower().split()
+        self.phrase = re.sub('[\^%$@)(><=+&\[\]`-]', '', self.phrase).lower().split()
 
     
+    #@micropython.native
     def preprocess_dates_numbers(self):
         """
         This function normalizes dates, numbers
@@ -155,12 +162,10 @@ class Utterance:
         """
 
         results = []
-        for index in range(len(self.phrase)):
-            self.paus_or_phone = self.phrase[index]
-            self.paus_or_phone = re.sub('[.,;:?!]', '', self.paus_or_phone)
-
+        for self.paus_or_phone in self.phrase:
             # Check if the paus_or_phone is in date format
-            if re.match('\\d+[.\-/]\\d+([\\.\\-/]\\d+|)', self.paus_or_phone):
+            if re.match('\\d+[\\.\\-/]\\d+([\\.\\-/]\\d+)?', self.paus_or_phone):
+                self.paus_or_phone = re.sub('[,;:?!]', '', self.paus_or_phone)
                 print(f"Found date: {self.paus_or_phone}")
                 try:
                     pronounce = self.process_date()
@@ -173,6 +178,7 @@ class Utterance:
             
             # Check if the paus_or_phone is in emphasis format (emphasis addition still in development)
             elif re.match('([1-9]\\d?\\d?[-.\\s]?)?\\d\\d\\d[-.\\s]?\\d\\d\\d[-.\\s]?\\d\\d\\d\\d', self.paus_or_phone):
+                self.paus_or_phone = re.sub('[.,;:?!]', '', self.paus_or_phone)
                 print(f"Found phone number: {self.paus_or_phone}")
                 try:
                     phone = re.sub('[-.\\s]', '', self.paus_or_phone)
@@ -196,6 +202,7 @@ class Utterance:
 
             # Check if paus_or_phone is in number format (only whole integers can be read out)
             elif re.match('\\d+', self.paus_or_phone):
+                self.paus_or_phone = re.sub('[.,;:?!]', '', self.paus_or_phone)
                 print(f"Found number: {self.paus_or_phone}")
                 try:
                     pronounce = self.process_number()
@@ -209,9 +216,10 @@ class Utterance:
             else:
                 results.append(self.paus_or_phone)
 
-        self.phrase=results
+        self.phrase = results
 
-
+    
+    #@micropython.native
     def process_date(self):
         """
         process_date takes a paus_or_phone that has the format of a
@@ -239,13 +247,15 @@ class Utterance:
         if len(tokens) > 2:
             year_raw = tokens[2]
             if len(year_raw) == 2:
-                year_raw = "19"+year_raw
+                if int(year_raw) < 25: year_raw = "20"+year_raw
+                else: year_raw = "19"+year_raw
             year = self.get_year_str(year_raw)
             results.extend(year)
         
         return results
 
-
+    
+    #@micropython.native
     def get_day_str(self, d):
         """
         This function processes a day numeric string
@@ -275,7 +285,8 @@ class Utterance:
 
         return daystr
 
-
+    
+    #@micropython.native
     def get_year_str(self, y):
         """
         This function takes a year (in string-numeric form from process_date
@@ -340,7 +351,8 @@ class Utterance:
         # The following line filters out any of the above values that are None type, creating the final string ystr.
         return [value for value in year_to_word_list if not value is None]
 
-
+    
+    #@micropython.native
     def process_number(self):
         """
         This function processes numbers
@@ -383,7 +395,8 @@ class Utterance:
         
         return normalized_number
 
-
+    
+    #@micropython.native
     def get_diphones(self): # Initialise CMU sequence, add pauses, and turn into a diphone sequence
         """
         Initialise CMU sequence, add pauses, and
@@ -402,7 +415,7 @@ class Utterance:
                 else: # Most cases just require CMU substitution.
                     phonelist.append(re.sub('[0-9]', '', self.pronunciation[cmupro][token].lower()))
 
-            if cmupro==len(self.pronunciation)-1 and phonelist[-1][-3:]!='pau': # Append pause
+            if cmupro == len(self.pronunciation)-1 and phonelist[-1][-3:] != 'pau': # Append pause
                 phonelist.append('pau4')  # 400ms
 
         diphonelist = []
@@ -412,7 +425,8 @@ class Utterance:
 
         return diphonelist
 
-
+    
+    #@micropython.native
     def punctuation(self):
         """
         Takes the list self.phrase and checks each end index and as to
@@ -422,10 +436,12 @@ class Utterance:
         """
         self.punctmarker = []
         for i in range(len(self.phrase)):
-            if self.phrase[i][-1] in '.,;:?!':
-                self.punctmarker.append((i,self.phrase[i][-1]))
+            sign = self.phrase[i][-1]
+            if sign in '.,;:?!':
+                self.punctmarker.append((i, sign))
 
-
+    
+    #@micropython.native
     def delpunct(self):
         """
         deletes punctuation in the self.phrase list
@@ -435,12 +451,8 @@ class Utterance:
         """
         q = []
         for i in self.phrase:
-            #if args.spell:
-            #    q.append(re.sub('[,;:?!]', '', i))
-            #else:
             q.append(re.sub('[.,;:?!]', '', i))
-
-        self.phrase=q
+        self.phrase = q
 
     
     def process(self, phrase, spell=False):
@@ -492,5 +504,3 @@ class Utterance:
                     self.pronunciation.append([self.punctmarker[punctcount][1]])
                     # add to the punctuation counter index
                     punctcount += 1
-
-        # Return only the diphones list by joining the phones using '<phone>-<phone>'

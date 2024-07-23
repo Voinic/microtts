@@ -1,5 +1,6 @@
 import btree
 import struct
+import array
 import re
 
 try:
@@ -27,73 +28,58 @@ class Synth:
         self.dbfile.close()
     
     
-    @micropython.native
     def get_diphone(self, diphone):
         key = bytes(diphone, "ascii")
         raw_audio = self.db[key]
         if not self.db_compressed:
             return struct.unpack(f"<{len(raw_audio)//2}h", raw_audio)
         else:
-            audio = []
-            for two_samples in raw_audio:
-                audio.append(two_samples&0x0f)
-                audio.append((two_samples >> 4)&0x0f)
-            decoded_audio = adpcm.decoder(audio)
-            return decoded_audio
+            return self.unpack_adpcm(raw_audio)
     
     
-    @micropython.native
-    def naively_concatenate(self):
-        self.output_audio = []
-        for audio in self.output_audios:
-            self.output_audio += audio
+    @micropython.viper
+    @staticmethod
+    def unpack_adpcm(raw_audio:object) -> object:
+        encoded_audio = array.array("b", [])
+        raw_audio_len = int(len(raw_audio))
+        raw_audio_ptr = ptr8(raw_audio)
+        for i in range(raw_audio_len):
+            two_samples:int = raw_audio_ptr[i]
+            encoded_audio.append(two_samples&0x0f)
+            encoded_audio.append((two_samples >> 4)&0x0f)
+        decoded_audio = adpcm.decode(encoded_audio)
+        return decoded_audio
+    
+    
+    @micropython.viper
+    @staticmethod
+    def crossfade(array1:object, array2:object, steps:int):
+        len1 = int(len(array1))
+        len2 = int(len(array2))
+        
+        if len2 == 0:
+            return
 
-
-    # Main function to process the array
-    @micropython.native
-    def crossfade(self, seconds=0.02):
-        """
-        This function concatenates the waveforms by using window
-        length cross-fading.
-        :param seconds:
-        :return:
-        """
-        self.output_audio = None
-
-        # initialise the windowlength
-        window_len = int(seconds*self.SAMPLE_RATE)
-
-        # Begin by going through arrays in the saved list
-        for array in self.output_audios:
-            # Initialize the windowed array
-            windowed_array = []
-
-            # Calculate the windowed array in loop
-            for i, sample in enumerate(array):
-                if i < window_len:
-                    window_coeff = i / (window_len - 1)
-                elif i < len(array) - window_len:
-                    window_coeff = 1
-                else:
-                    window_coeff = (len(array) - i - 1) / (window_len - 1)
-                
-                windowed_array.append(int(window_coeff * sample))
+        if len1 < steps:
+            steps = len1
+        if len2 < steps:
+            steps = len2
+        
+        max_ushort = const(1 << 16)
+        
+        if len1 > 0:
+            # Perform the crossfade
+            step_increment = int(max_ushort // steps)
+            for i in range(steps):
+                fade_ratio = i * step_increment
+                if fade_ratio > max_ushort:
+                    fade_ratio = max_ushort
+                inv_fade_ratio = max_ushort - fade_ratio
+                array1[len1 - steps + i] = (int(array1[len1 - steps + i]) * inv_fade_ratio + int(array2[i]) * fade_ratio) >> 16
             
-            # If diphones_array is None, initialize it
-            if self.output_audio is None:
-                self.output_audio = windowed_array
-                continue
-
-            # Calculate length of silence
-            len_silence = len(self.output_audio) - window_len
-            
-            # Update diphones_array in loop
-            for i in range(len(self.output_audio) + len(windowed_array) - window_len):
-                if i < len(self.output_audio):
-                    if i >= len_silence:
-                        self.output_audio[i] += windowed_array[i - len_silence]
-                else:
-                    self.output_audio.append(windowed_array[i - len_silence])
+        # Copy the non-crossfaded part of array2
+        for i in range(steps, len2):
+            array1.append(array2[i])
 
     
     @micropython.native
@@ -104,11 +90,12 @@ class Synth:
         :return:
         """
         length = int(self.silence_length*self.SAMPLE_RATE)
-        self.output_audios.append([0]*length)
+        silence_arr = array.array("h", [0]*length)
+        self.output_audios.append(silence_arr)
     
     
     @micropython.native
-    def synthesize(self, diphones, crossfade=False):
+    def synthesize(self, diphones, crossfade=0):
         # Create audio sequence from diphones
         self.output_audios = []
         
@@ -151,9 +138,16 @@ class Synth:
             # append silence to the list if a value was added to variable self.silence_length during loop
             if self.silence_length != 0:
                 self.add_silence()
-
+        
         # join audio data chunks into one waveform
-        self.crossfade() if crossfade else self.naively_concatenate()
+        self.output_audio = array.array("h", [])
+        if crossfade > 0:
+            window_len = int(crossfade*self.SAMPLE_RATE)
+        for audio in self.output_audios:
+            if crossfade > 0:
+                self.crossfade(self.output_audio, audio, window_len)
+            else:
+                self.output_audio.extend(audio)
     
     
     @micropython.native
@@ -203,19 +197,23 @@ class Synth:
 
 
     @micropython.native
-    def get_audio(self, chunk_size=1024):
+    def get_audio(self, chunk_size=2048):
         """
         Return synthesized output audio data containing
         the concatenated audio for the input diphone sequence.
         """
-        if self.output_audio is None:
+        output_audio = self.output_audio
+        
+        if output_audio is None:
             return bytearray()
         
+        output_audio_mv = memoryview(output_audio)
+        
         packed_audio = bytearray()
-        num_chunks = (len(self.output_audio) + chunk_size - 1) // chunk_size  # Calculate the number of chunks needed
+        num_chunks = (len(output_audio) + chunk_size - 1) // chunk_size  # Calculate the number of chunks needed
 
         for i in range(num_chunks):
-            chunk = self.output_audio[i * chunk_size:(i + 1) * chunk_size]
+            chunk = output_audio_mv[i * chunk_size:(i + 1) * chunk_size]
             packed_audio.extend(struct.pack(f"<{len(chunk)}h", *chunk))
         
         return packed_audio

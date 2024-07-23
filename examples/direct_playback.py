@@ -9,7 +9,7 @@ DB_COMPRESSED = False
 #DIPHONES_DB = "/sd/diphones_lq.db"
 #DB_COMPRESSED = True
 
-POSTPROCESS = True  
+CROSSFADE = 0.025
 
 SCK_PIN = 37
 WS_PIN = 38
@@ -34,7 +34,7 @@ def tts(text):
     utterance.process(text)
     diphones = utterance.get_diphones()
     print("Synthesizing speech")
-    synth.synthesize(diphones, POSTPROCESS)
+    synth.synthesize(diphones, CROSSFADE)
     audio = synth.get_audio()
     print("Playing...")
     audio_out.write(audio)
