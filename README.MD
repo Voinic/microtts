@@ -27,7 +27,7 @@ LEXICON_DB = "/sd/lexicon.db"
 DIPHONES_DB = "/sd/diphones.db"
 DB_COMPRESSED = False
 
-POSTPROCESS = True
+CROSSFADE = 0.025
 
 TEXT = "This is a test"
 
@@ -37,7 +37,7 @@ synth = Synth(DIPHONES_DB, DB_COMPRESSED)
 utterance.process(TEXT)
 diphones = utterance.get_diphones()
 
-synth.synthesize(diphones, POSTPROCESS)
+synth.synthesize(diphones, CROSSFADE)
 audio = synth.get_audio()
 ```
 
